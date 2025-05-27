@@ -9,11 +9,11 @@ router
 
 router
     .route('/image/')
-    .post(bookingController.uploadPaymentImage, bookingController.createBooking)
+    .post(bookingController.uploadPaymentImages, bookingController.createBooking)
 
 router
     .route('/imageupdate/:id')
-    .patch(bookingController.uploadPaymentImage, bookingController.updateBooking)
+    .patch(bookingController.uploadPaymentImages, bookingController.updateBooking)
 
 router
     .route('/:id')

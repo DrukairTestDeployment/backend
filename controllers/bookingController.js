@@ -65,7 +65,7 @@ const upload = multer({
     },
   });
 
-exports.uploadPaymentImage = upload.single("image");
+exports.uploadPaymentImages = upload.array('image', 10);
 
 
 exports.getAllBookings = async (req, res) => {
@@ -88,16 +88,24 @@ exports.createBooking = async (req, res) => {
             req.body.assigned_pilot =  null;
         }
 
-        if (req.file) {
-            req.body.image = req.file.originalname;
-            const params = {
+        const imageUrls = [];
+
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                
+                const uniqueFileName = `${Date.now()}_${file.originalname}`;
+                const params = {
                 Bucket: bucketName,
-                Key: req.file.originalname,
-                Body: req.file.buffer,
-                ContentType: 'image/jpeg'
-            };
-            await s3.upload(params).promise();
+                Key: uniqueFileName,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+                };
+                await s3.upload(params).promise();
+                imageUrls.push(uniqueFileName); // Store uploaded image key
+            }
         }
+        
+        req.body.image = imageUrls;
 
         if (!req.body.refund_id) {
             const refund = await Refund.findOne({ plan: 0 })

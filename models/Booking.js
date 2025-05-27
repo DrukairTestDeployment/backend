@@ -81,7 +81,8 @@ const bookingSchema = new mongoose.Schema({
         default: "None",
     },
     image: {
-        type: String
+        type: [String],
+        default: [],
     },
     payment_type: {
         type: String,
