@@ -27,7 +27,7 @@ AWS.config.update({
 
 const s3 = new AWS.S3()
 
-const privateKeyPem = fs.readFileSync('C:/Users/Tashi Wangyel/Desktop/Capstone Project/heli-reservation-system-backend/BE10000115.key', 'utf-8');
+const privateKeyPem = fs.readFileSync('/home/ubuntu/Backend/backend/BE10000115.key', 'utf-8');
 exports.signChecksum = (req, res) => {
     const {
         bfs_benfBankCode,
