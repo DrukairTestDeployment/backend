@@ -27,8 +27,7 @@ AWS.config.update({
 
 const s3 = new AWS.S3()
 
-// const privateKeyPem = fs.readFileSync('C:/Users/Tashi Wangyel/Desktop/Capstone Project/heli-reservation-system-backend/BE10000115.key', 'utf-8');
-const privateKeyPem = fs.readFileSync('/home/ubuntu/Backend/backend/BE10000115.key', 'utf-8');
+const privateKeyPem = fs.readFileSync('C:/Users/Tashi Wangyel/Desktop/Capstone Project/heli-reservation-system-backend/BE10000115.key', 'utf-8');
 exports.signChecksum = (req, res) => {
     const {
         bfs_benfBankCode,
@@ -44,7 +43,7 @@ exports.signChecksum = (req, res) => {
     } = req.body;
     const checksumString = `${bfs_benfBankCode}|${bfs_benfId}|${bfs_benfTxnTime}|${bfs_msgType}|${bfs_orderNo}|${bfs_paymentDesc}|${bfs_remitterEmail}|${bfs_txnAmount}|${bfs_txnCurrency}|${bfs_version}`;
     const sign = crypto.createSign('RSA-SHA1');
-    sign.update(checksumString);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+    sign.update(checksumString);   
     const privateKey = privateKeyPem;
     const signature = sign.sign(privateKey, 'hex');
     const f_signature = signature.toUpperCase();
@@ -87,7 +86,6 @@ exports.createBooking = async (req, res) => {
         if(req.body.assigned_pilot === "" || req.body.assigned_pilot === "null" || !req.body.assigned_pilot){
             req.body.assigned_pilot =  null;
         }
-
         const imageUrls = [];
 
         if (req.files && req.files.length > 0) {
@@ -106,6 +104,7 @@ exports.createBooking = async (req, res) => {
         }
         
         req.body.image = imageUrls;
+
 
         if (!req.body.refund_id) {
             const refund = await Refund.findOne({ plan: 0 })
@@ -140,17 +139,44 @@ exports.getImage = async (req, res) => {
         Expires: 60 * 60 };
       
       const url = s3.getSignedUrl("getObject", params);
-      
-      // Respond with the signed URL
+    
       res.status(200).json({ data: url, status: 'success' });
     } catch (error) {
-      // Log error and send error response
+    
       console.error('Error generating signed URL:', error);
       res.status(500).json({ error: 'Failed to generate signed URL', status: 'error' });
     }
 };
-  
 
+exports.deleteBookingImage = async (req, res) => {
+    try {
+        const { bookingId, imageName } = req.params;
+        if (!bookingId || !imageName) {
+            return res.status(400).json({ status: "error", message: "Missing bookingId or imageName" });
+        }
+
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            return res.status(404).json({ status: "error", message: "Booking not found" });
+        }
+
+        const deleteParams = {
+            Bucket: bucketName,
+            Key: imageName
+        };
+
+        await s3.deleteObject(deleteParams).promise();
+
+        booking.image = booking.image.filter(img => img !== imageName);
+        await booking.save();
+
+        res.json({ status: "success", message: "Image deleted successfully", updatedImages: booking.image });
+
+    } catch (error) {
+        res.status(500).json({ status: "error", message: error.message });
+    }
+};
+  
 exports.getBooking = async (req, res) => {
     try {
         const booking = await Booking.findById(req.params.id).populate('service_id').populate('destination').populate('assigned_pilot').populate('refund_id');
@@ -219,29 +245,58 @@ exports.updateBooking = async (req, res) => {
         if (req.body.refund_id === "0") {
             req.body.refund_id = null;
         }
+
         if (req.body.destination === "Others" || req.body.destination === "null") {
             req.body.route_type = "Unpublished";
             req.body.destination = null;
         }
 
-        if(req.body.assigned_pilot === "" || req.body.assigned_pilot === "null" || !req.body.assigned_pilot){
-            req.body.assigned_pilot =  null;
+        if (
+            req.body.assigned_pilot === "" ||
+            req.body.assigned_pilot === "null" ||
+            !req.body.assigned_pilot
+        ) {
+            req.body.assigned_pilot = null;
         }
-        const booking = await Booking.findByIdAndUpdate(req.params.id, req.body);
+
+        const booking = await Booking.findById(req.params.id);
         if (!booking) {
-            return res.status(404).json({ status: "error", message: "Route not found" });
+            return res.status(404).json({ status: "error", message: "Booking not found" });
         }
-        if (booking.payable === true && booking.payEmail === false) {
+
+        const imageUrls = [...(booking.image || [])]; 
+
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const uniqueFileName = `${Date.now()}_${file.originalname}`;
+                const params = {
+                    Bucket: bucketName,
+                    Key: uniqueFileName,
+                    Body: file.buffer,
+                    ContentType: file.mimetype,
+                };
+                await s3.upload(params).promise();
+                imageUrls.push(uniqueFileName);
+            }
+        }
+
+        req.body.image = imageUrls;
+
+        Object.assign(booking, req.body);
+        await booking.save();
+
+        if (req.body.payable === true && booking.payEmail === false) {
             await sendPaymentEmail(booking.agent_email, booking.bookingID);
             booking.payEmail = true;
             await booking.save();
         }
+
         res.json({ data: booking, status: "success" });
     } catch (err) {
         res.status(500).json({ status: "error", message: err.message });
-        console.log(err.message)
     }
 };
+
 
 exports.deleteBooking = async (req, res) => {
     try {

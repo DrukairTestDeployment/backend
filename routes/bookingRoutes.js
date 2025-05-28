@@ -16,6 +16,10 @@ router
     .patch(bookingController.uploadPaymentImages, bookingController.updateBooking)
 
 router
+    .route('/imagedelete/:bookingId/:imageName')
+    .delete(bookingController.deleteBookingImage);
+    
+router
     .route('/:id')
     .get(bookingController.getBooking)
     .patch(bookingController.updateBooking)
