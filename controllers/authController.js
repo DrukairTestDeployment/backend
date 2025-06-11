@@ -72,40 +72,42 @@ const createSendToken = (user, statusCode, res) => {
     res.status(statusCode).json({ status: "success", token, data: { user } })
 }
 exports.signup = async (req, res, next) => {
-    try {
-        const otp = await getUniqueOTP();
-        const newUser = await User.create({
-            ...req.body,
-            otp: otp,
-            otpVerified: false,
-        });
+  try {
+    const otp = await getUniqueOTP();
+    const newUser = await User.create({
+      ...req.body,
+      otp: otp,
+      otpVerified: false,
+    });
 
-        const user = await newUser.populate('role');
-        
-        createSendToken(newUser, 201, res);
+    const user = await newUser.populate('role');
 
-        if (user.role.name === "USER") {
-            const mailOptions = {
-                from: process.env.EMAIL_USER,
-                to: newUser.email,
-                subject: 'Signup OTP Verification',
-                text: `Your OTP for account verification is: ${otp}`
-            };
-            await transporter.sendMail(mailOptions);
-        }
-    } catch (err) {
-        if (err.code === 11000) {
-            res.status(400).json({
-                status: 'fail',
-                message: 'Your Email or Contact Number is already in use. Please use a different one.',
-            });
-        } else {
-            res.status(500).json({
-                message: err.message,
-            });
-        }
+    if (user.role.name === "USER") {
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: newUser.email,
+        subject: 'Signup OTP Verification',
+        text: `Your OTP for account verification is: ${otp}`,
+      };
+      await transporter.sendMail(mailOptions);
     }
+    
+    return createSendToken(newUser, 201, res);
+
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Your Email or Contact Number is already in use. Please use a different one.',
+      });
+    }
+
+    return res.status(500).json({
+      message: 'Something went wrong. Please try again later.',
+    });
+  }
 };
+
 
 exports.login = async (req, res, next) => {
     try {
