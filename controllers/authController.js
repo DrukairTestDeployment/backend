@@ -228,8 +228,8 @@ exports.userProtect = async (req, res, next) => {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: "system@drukair.com.bt",
+        pass: 'fpyoqoyynzwgfrqx',
     },
 })
 
