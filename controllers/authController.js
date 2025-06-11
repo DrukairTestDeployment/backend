@@ -226,8 +226,8 @@ exports.userProtect = async (req, res, next) => {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: "sanchezpenjor@gmail.com",
-        pass: "mevz sypn eetp bvvm",
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
 })
 
@@ -267,7 +267,6 @@ exports.sendOtp = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
     try {
-        console.log(req.body)
         const { email, otp, newPassword } = req.body;
         const user = await User.findOne({email });
         console.log(user.otp, otp)
