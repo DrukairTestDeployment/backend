@@ -81,6 +81,7 @@ exports.signup = async (req, res, next) => {
     });
 
     const user = await newUser.populate('role');
+    createSendToken(newUser, 201, res);
 
     if (user.role.name === "USER") {
       const mailOptions = {
@@ -91,8 +92,6 @@ exports.signup = async (req, res, next) => {
       };
       await transporter.sendMail(mailOptions);
     }
-    
-    return createSendToken(newUser, 201, res);
 
   } catch (err) {
     if (err.code === 11000) {
