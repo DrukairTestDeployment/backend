@@ -290,7 +290,247 @@ exports.updateBooking = async (req, res) => {
             booking.payEmail = true;
             await booking.save();
         }
+        if (booking.status === 'Confirmed') {
+            const commisions = await Commision.find()
+            const commision = commisions[0].commisionValue / 100;
+            const imagePath = path.resolve(__dirname, '../logo-bordered.png');
+            // Prepare email
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: booking.agent_email,
+                subject: 'Booking Approved',
+                html: `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>E-ticket Receipt</title>
+                <style type="text/css">
+                body, div, p, h1, h2, h3, h4, h5, h6 {
+                    margin: 0;
+                    padding: 0;
+                    color: black !important;
+                }
 
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                    -webkit-font-smoothing: antialiased;
+                    font-size: 16px;
+                    line-height: 1.4;
+                    margin: 0;
+                    padding: 0;
+                    -ms-text-size-adjust: 100%;
+                    -webkit-text-size-adjust: 100%;
+                }
+
+                .container {
+                    width: 100%;
+                    max-width: 600px;
+                    margin: 20px 0;
+                    padding: 20px;
+                    border: 2px solid #22326e;
+                    border-radius: 5px;
+                    color: black !important;
+                }
+
+                .header {
+                    border-bottom: 2px solid #000000;
+                    padding: 20px 0;
+                    display: table;
+                    width: 100%;
+                }
+
+                .header-logo {
+                    display: table-cell;
+                    vertical-align: middle;
+                }
+
+                .header-logo img {
+                    max-height: 100px;
+                    width: auto;
+                }
+
+                .header-text {
+                    display: table-cell;
+                    vertical-align: middle;
+                    text-align: right;
+                    font-size: 20px;
+                    color: #22326e;
+                }
+
+                .section-header, .sub-header {
+                    color: white !important;
+                }
+
+                .section-header {
+                    background-color: #22326e;
+                    padding: 10px;
+                    margin: 20px 0 10px 0;
+                    font-size: 16px;
+                }
+
+                .sub-header {
+                    background-color: #404040;
+                    padding: 10px;
+                    margin: 10px 0;
+                    font-weight: bold;
+                }
+
+                .info-row {
+                    display: table;
+                    width: 100%;
+                    margin: 10px 0;
+                    color: black !important;
+                }
+
+                .info-label, .info-value {
+                    display: table-cell;
+                }
+
+                .info-label {
+                    width: 50%;
+                    padding-right: 10px;
+                }
+
+                .info-value {
+                    width: 50%;
+                    font-weight: bold;
+                }
+
+                @media screen and (max-width: 600px) {
+                    .container {
+                        width: 95% !important;
+                        padding: 10px !important;
+                    }
+
+                    .header-text {
+                        font-size: 16px !important;
+                    }
+
+                    .info-row, .info-label, .info-value {
+                        display: block !important;
+                        width: 100% !important;
+                    }
+
+                    .info-value {
+                        margin-bottom: 10px !important;
+                    }
+                }
+            </style>
+            </head>
+            <body style="font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0;">
+                <p style="color: black;">Dear Madam/Sir,</p>
+                <p style="color: black;">YOU WILL FIND ATTACHED TO THIS EMAIL YOUR E-TICKET(S).</p>
+                <p style="color: black;">Your booking reference is <strong>${booking.bookingID}</strong>. Please refer to it each time you need to contact our services.</p>
+                <p style="color: black;">We look forward to welcoming you on board your upcoming Drukair flight.</p>
+                <p style="color: black;">You have questions?</p>
+                <p style="color: black;">For customer services please send mail to:</p>
+                <a href="mailto:heli@drukair.com.bt" style="color: #22326e;">heli@drukair.com.bt</a> >> for general enquiry (During weekdays - Working Hrs. 9AM-5PM BST)<br>
+
+                <div class="container">
+                    <div class="header">
+                        <div class="header-logo">
+                            <img src="cid:companyLogo" alt="Company Logo">
+                        </div>
+                        <div class="header-text">
+                            E-ticket Receipt <span style="color: #22326e;">DRUKAIR HELI</span>
+                        </div>
+                    </div>
+
+                    <div class="section-header">
+                        PASSENGER AND TICKET INFORMATION
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">Name</div>
+                        <div class="info-value">${booking.agent_name}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Agent CID</div>
+                        <div class="info-value">${booking.agent_cid}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">BOOKING REFERENCE</div>
+                        <div class="info-value">${booking.bookingID}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">ISSUED THROUGH</div>
+                        <div class="info-value">${booking.booking_type}</div>
+                    </div>
+
+                    <p style="margin: 20px 0;">You are expected to arrive at pickup destination 30mins prior to the flight departure</p>
+
+                    <div class="section-header">
+                        TRAVEL INFORMATION
+                    </div>
+
+                    <div class="sub-header">
+                        DEPARTURE
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">FLIGHT STATUS</div>
+                        <div class="info-value">${booking.status}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">DEPARTURE DATE</div>
+                        <div class="info-value">${booking.flight_date}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">DEPARTURE TIME</div>
+                        <div class="info-value">${booking.departure_time}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">PICKUP DESTINATION</div>
+                        <div class="info-value">${booking.pickup_point}</div>
+                    </div>
+
+                    <div class="section-header">
+                        FARE INFORMATION
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">Service</div>
+                        <div class="info-value">${booking.service_id.name}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">FLIGHT FARE</div>
+                        <div class="info-value">${(() => {
+                        // Calculate refund in BTN
+                        const refundBTN = booking.refund_id ?
+                            (booking.bookingPriceBTN - (booking.bookingPriceBTN * (booking.refund_id.plan / 100))) :
+                            booking.bookingPriceBTN;
+
+                        // Calculate refund in USD
+                        const refundUSD = booking.refund_id ?
+                            Number((booking.bookingPriceUSD) - (booking.bookingPriceUSD * (booking.refund_id.plan / 100)) +
+                                (((booking.bookingPriceUSD) - (booking.bookingPriceUSD * (booking.refund_id.plan / 100))) * commision)).toFixed(2) :
+                            Number(booking.bookingPriceUSD + (booking.bookingPriceUSD * commision)).toFixed(2);
+
+                        // Check cType and return appropriate value
+                        return booking.cType === 'BTN' ?
+                            `${Number(refundBTN).toFixed(2)} BTN` :
+                            `${Number(refundUSD).toFixed(2)} USD`;
+                    })()}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">FORM OF PAYMENT</div>
+                        <div class="info-value">${booking.payment_type}</div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            `,
+                attachments: [{
+                    filename: 'logo.png',
+                    path: imagePath,
+                    cid: 'companyLogo'
+                }]
+            };
+
+            await transporter.sendMail(mailOptions);
+        }
         res.json({ data: booking, status: "success" });
     } catch (err) {
         res.status(500).json({ status: "error", message: err.message });
@@ -480,7 +720,7 @@ const sendPaymentEmail = async (userEmail, bookingID) => {
                     <p style="color: #000000 !important;">Respected Sir/Madam,</p>
                 </div>
                 <div class="email-content" style="color: #000000 !important;">
-                    Thank you for placing your reservation with us. We have approved your booking and hence approved for further payment procedures. To check the status or pay for your booking,
+                    Thank you for your reservation. It has been received and approved. Please proceed with the payment to finalize your booking. To check the status or pay for your booking,
                     please use the following reference ID:<strong>${bookingID}</strong>. We appreciate your trust in our
                     services and look forward to assisting you further.
                 </div>
