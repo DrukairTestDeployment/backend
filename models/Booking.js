@@ -33,8 +33,8 @@ const bookingSchema = new mongoose.Schema({
         required: true,
     },
     layap:{
-        type:String,
-        default:"false"
+        type:Boolean,
+        default:false
     },
     
     flight_date: {
@@ -43,7 +43,6 @@ const bookingSchema = new mongoose.Schema({
     },
     departure_time: {
         type: String,
-        required: true,
     },
     ground_time: {
         type: String,
@@ -85,8 +84,7 @@ const bookingSchema = new mongoose.Schema({
         default: [],
     },
     payment_type: {
-        type: String,
-        default: "Online",
+        type: String
     },
     permission: {
         type: String,
