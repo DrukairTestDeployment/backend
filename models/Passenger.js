@@ -31,12 +31,6 @@ const passengerSchema = new mongoose.Schema ({
     },
     remarks: {
         type: String,
-    },
-    boarding: {
-        type: String,
-    },
-    disembark: {
-        type: String
     }
 })
 

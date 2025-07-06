@@ -16,12 +16,12 @@ const validator = require('validator');
 //     headers: true,
 // });
 
-// exports.loginLimiter = rateLimit({
-//     windowMs: 30 * 60 * 1000,
-//     max: 3,
-//     message: "Too many login attempts. Try again later.",
-//     headers: true,
-// });
+exports.loginLimiter = rateLimit({
+    windowMs: 30 * 60 * 1000,
+    max: 3,
+    message: "Too many login attempts. Try again later.",
+    headers: true,
+});
 
 // exports.forgotPasswordLimiter = rateLimit({
 //     windowMs: 24 * 60 * 60 * 1000,
@@ -61,11 +61,12 @@ const createSendToken = (user, statusCode, res) => {
     const token = signToken(user._id)
     const cookieOptions = {
         expires: new Date(
-            Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
+            Date.now() + 7 * 24 * 60 * 60 * 1000,
         ),
         httpOnly: true,
         sameSite: "Strict",
         path: "/",
+        secure: true
     }
     res.cookie('jwt', token, cookieOptions)
 
@@ -80,8 +81,9 @@ exports.signup = async (req, res, next) => {
       otpVerified: false,
     });
 
-    const user = await newUser.populate('role');
-    createSendToken(newUser, 201, res);
+    const user = await User.findById(newUser._id).select('-contactNo -otp -address -status -otp -otpVerified -password').populate('role');
+
+    createSendToken(user, 201, res);
 
     if (user.role.name === "USER") {
       const mailOptions = {
@@ -123,7 +125,7 @@ exports.login = async (req, res, next) => {
             }
         }
 
-        const user = await User.findOne({ email }).select('+password').populate('role')
+        const user = await User.findOne({ email }).select('+password -contactNo -address -otp -status -name').populate('role')
 
         if (!user || !await user.correctPassword(password, user.password)) {
             let attempts = failedAttempts.get(email) || { attempts: 0, lockTime: Date.now() };
@@ -178,7 +180,7 @@ exports.protect = async (req, res, next) => {
         }
 
         if (!token || token === "") {
-            return res.redirect("http://localhost:3000/login");
+            return res.redirect("https://helistaging.drukair.com.bt/login");
         }
 
         const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
@@ -206,7 +208,7 @@ exports.userProtect = async (req, res, next) => {
         }
 
         if (!token || token === "") {
-            return res.redirect("http://localhost:3000/login");
+            return res.redirect("https://helistaging.drukair.com.bt/login");
         }
 
         const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
@@ -298,4 +300,36 @@ exports.forgotPassword = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+};
+
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required." });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (user.otpVerified) {
+      return res.status(400).json({ message: "OTP already verified." });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP." });
+    }
+
+    user.otpVerified = true;
+    await user.save();
+
+    return res.status(200).json({ status: "success", message: "OTP verified successfully." });
+
+  } catch (err) {
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
 };

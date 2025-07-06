@@ -4,7 +4,7 @@ const authController = require('./../controllers/authController')
 const router = express.Router()
 
 router.post('/register',authController.signup)
-router.post('/signin', authController.login)
+router.post('/signin', authController.loginLimiter, authController.login)
 router.get('/logout', authController.logout)
 router.patch('/updatepassword/:id', authController.updatePassword)
 
