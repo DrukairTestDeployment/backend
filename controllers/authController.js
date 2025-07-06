@@ -125,7 +125,7 @@ exports.login = async (req, res, next) => {
             }
         }
 
-        const user = await User.findOne({ email }).select('-contactNo -address -otp -status -name').populate('role')
+        const user = await User.findOne({ email }).select('-contactNo -address -otp -name').populate('role')
 
         if (!user || !await user.correctPassword(password, user.password)) {
             let attempts = failedAttempts.get(email) || { attempts: 0, lockTime: Date.now() };
