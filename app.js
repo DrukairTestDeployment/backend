@@ -1,9 +1,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const helmet = require("helmet")
 const app = express();
 const cors = require('cors');
 const cookieParser = require("cookie-parser");
-
 const roleRoutes = require('./routes/roleRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const refundRoutes = require('./routes/refundRoutes');
@@ -15,6 +15,16 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const performanceRoutes = require('./routes/performanceRoutes');
 const agentRoutes = require('./routes/agentRoutes');
 const commisionRoutes = require('./routes/commisionRoutes')
+
+app.use(helmet());
+
+app.use(
+  helmet.hsts({
+    maxAge: 63072000,
+    includeSubDomains: true,
+    preload: true,
+  })
+);
 
 app.use(cors({
     origin: 'https://helistaging.drukair.com.bt',

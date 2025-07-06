@@ -9,12 +9,12 @@ const failedAttempts = new Map();
 const validator = require('validator');
 
 
-// exports.signupLimiter = rateLimit({
-//     windowMs: 60 * 60 * 1000, 
-//     max: 3,
-//     message: "Too many signup attempts, please try again later.",
-//     headers: true,
-// });
+exports.signupLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, 
+    max: 3,
+    message: "Too many signup attempts, please try again later.",
+    headers: true,
+});
 
 exports.loginLimiter = rateLimit({
     windowMs: 30 * 60 * 1000,
@@ -23,12 +23,12 @@ exports.loginLimiter = rateLimit({
     headers: true,
 });
 
-// exports.forgotPasswordLimiter = rateLimit({
-//     windowMs: 24 * 60 * 60 * 1000,
-//     max: 3,
-//     message: "Too many password reset requests. Try again later.",
-//     headers: true,
-// });
+exports.forgotPasswordLimiter = rateLimit({
+    windowMs: 24 * 60 * 60 * 1000,
+    max: 3,
+    message: "Too many password reset requests. Try again later.",
+    headers: true,
+});
 
 const signToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -125,7 +125,7 @@ exports.login = async (req, res, next) => {
             }
         }
 
-        const user = await User.findOne({ email }).select('+password -contactNo -address -otp -status -name').populate('role')
+        const user = await User.findOne({ email }).select('-contactNo -address -otp -status -name').populate('role')
 
         if (!user || !await user.correctPassword(password, user.password)) {
             let attempts = failedAttempts.get(email) || { attempts: 0, lockTime: Date.now() };
