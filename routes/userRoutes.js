@@ -28,4 +28,7 @@ router
 router
     .get('/email/:email', userController.getUserByEmail);
 
+router
+    .post('/verifyOtp', authController.verifyOtp);
+
 module.exports = router

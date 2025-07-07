@@ -15,6 +15,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const performanceRoutes = require('./routes/performanceRoutes');
 const agentRoutes = require('./routes/agentRoutes');
 const commisionRoutes = require('./routes/commisionRoutes')
+const legRoutes = require('./routes/legRoutes')
 
 app.use(helmet());
 
@@ -47,6 +48,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/performance", performanceRoutes);
 app.use("/api/agents", agentRoutes);
 app.use("/api/commision", commisionRoutes);
+app.use("/api/leg", legRoutes)
 
 app.post('/cancelrmapayment', (req, res) => {
     res.send(`<!DOCTYPE html>

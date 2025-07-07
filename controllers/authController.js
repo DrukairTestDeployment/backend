@@ -259,7 +259,6 @@ exports.sendOtp = async (req, res) => {
         };
 
         await transporter.sendMail(mailOptions);
-
         return res.json({ status: "OTP sent successfully" });
 
     } catch (err) {
@@ -273,7 +272,6 @@ exports.forgotPassword = async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
         const user = await User.findOne({email });
-        console.log(user.otp, otp)
         if (!user) {
             return res.status(404).send('No user found with that email address.');
         }
@@ -288,7 +286,7 @@ exports.forgotPassword = async (req, res) => {
 
         user.password = newPassword;
 
-        const newOTP = generateOTP();
+        const newOTP = await getUniqueOTP();
         user.otp = newOTP;
 
         await user.save();
@@ -316,16 +314,9 @@ exports.verifyOtp = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    if (user.otpVerified) {
-      return res.status(400).json({ message: "OTP already verified." });
-    }
-
     if (user.otp !== otp) {
       return res.status(400).json({ message: "Invalid OTP." });
     }
-
-    user.otpVerified = true;
-    await user.save();
 
     return res.status(200).json({ status: "success", message: "OTP verified successfully." });
 

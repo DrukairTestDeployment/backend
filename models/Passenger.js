@@ -25,6 +25,10 @@ const passengerSchema = new mongoose.Schema ({
     contact:{
         type:String,
     },
+    leg_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Leg',
+    },
     booking_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Booking',

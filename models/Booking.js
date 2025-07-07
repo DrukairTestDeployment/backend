@@ -73,7 +73,6 @@ const bookingSchema = new mongoose.Schema({
     },
     payment_status: {
         type: String,
-        required: true,
     },
     journal_no: {
         type: String,

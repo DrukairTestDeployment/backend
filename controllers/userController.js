@@ -76,7 +76,7 @@ exports.getUser = async (req, res) => {
 exports.getUserByEmail = async (req, res) => {
     try {
         const { email } = req.params;
-        const user = await User.findOne({email: email});
+        const user = await User.findOne({email: email}).select('-password -otp -contactNo -otpVerified -email -status -address');
         res.json({ data: user, status: 'success' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -92,8 +92,8 @@ exports.updateUser = async (req, res) => {
             }
         }
 
-        if(req.body.otpVerified === true){
-            req.body.otp = generateOTP();
+        if(req.body.otpVerified === true || req.body.email){
+            req.body.otp = await getUniqueOTP();
         }
         
         const user = await User.findByIdAndUpdate(req.params.id, req.body);
