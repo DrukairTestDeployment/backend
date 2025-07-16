@@ -7,14 +7,12 @@ const passengerSchema = new mongoose.Schema ({
     },
     weight:{
         type:String,
-        required:[true, 'Please enter passenger weight']
     },
     cid: {
         type:String,
     },
     bagWeight:{
         type:String,
-        required:[true, 'Please enter baggage weight']
     },
     gender:{
         type:String,
