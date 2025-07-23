@@ -23,6 +23,9 @@ router
     .post('/send-otp', authController.sendOtp);
 
 router
+    .post('/email-otp', authController.emailOtp);
+
+router
     .post('/reset-password', authController.forgotPasswordLimiter, authController.forgotPassword);
 
 router

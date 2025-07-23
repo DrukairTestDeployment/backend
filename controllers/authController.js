@@ -141,7 +141,12 @@ exports.login = async (req, res, next) => {
 }
 
 exports.logout = (req, res) => {
-    res.clearCookie('jwt', { path: "/" })
+    res.clearCookie("jwt", {
+        path: "/",
+        httpOnly: true,
+        sameSite: "Strict",
+        secure: true,
+    });
     res.status(200).json({ status: 'success' })
 }
 
@@ -267,6 +272,44 @@ exports.sendOtp = async (req, res) => {
     }
 };
 
+exports.emailOtp = async (req, res) => {
+    try {
+        const { email, newEmail } = req.body;
+        
+        if (!email || !newEmail) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+        const newexistingUser = await User.findOne({ email: newEmail });
+        if (newexistingUser) {
+            return res.status(404).json({
+                message: `The email is already registered!`
+            });
+        }
+        
+
+        const existingUser = await User.findOne({ email });
+        if (!existingUser) {
+            return res.status(404).json({
+                message: `No user found with this email. Please check the email address or register.`
+            });
+        }
+
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: newEmail,
+            subject: 'OTP Verification',
+            text: `Your OTP is: ${existingUser.otp}`,
+        };
+
+        await transporter.sendMail(mailOptions);
+        return res.json({ status: "success" });
+
+    } catch (err) {
+        // console.error('Error in sendOtp:', err); 
+        res.status(500).json({ message: 'Internal server error. Please try again later.' });
+    }
+};
 
 exports.forgotPassword = async (req, res) => {
     try {
