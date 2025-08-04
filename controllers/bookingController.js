@@ -259,7 +259,7 @@ exports.updateBooking = async (req, res) => {
             req.body.assigned_pilot = null;
         }
 
-        const booking = await Booking.findById(req.params.id);
+        const booking = await Booking.findById(req.params.id).populate("service_id").populate("refund_id");
         if (!booking) {
             return res.status(404).json({ status: "error", message: "Booking not found" });
         }
@@ -292,7 +292,6 @@ exports.updateBooking = async (req, res) => {
         }
         if (booking.status === 'Confirmed') {
             const commisions = await Commision.find()
-            const commision = commisions[0].commisionValue / 100;
             const imagePath = path.resolve(__dirname, '../logo-bordered.png');
             // Prepare email
             const mailOptions = {
@@ -497,26 +496,25 @@ exports.updateBooking = async (req, res) => {
                     <div class="info-row">
                         <div class="info-label">FLIGHT FARE</div>
                         <div class="info-value">${(() => {
-                        // Calculate refund in BTN
-                        const refundBTN = booking.refund_id ?
-                            (booking.bookingPriceBTN - (booking.bookingPriceBTN * (booking.refund_id.plan / 100))) :
-                            booking.bookingPriceBTN;
+                        const refundPercent = booking?.refund_id?.plan || 0;
+                        const comm = commisions[0]?.commisionValue / 100 || 0;
+                        const cType = booking?.cType?.toUpperCase() || 'BTN';
 
-                        // Calculate refund in USD
-                        const refundUSD = booking.refund_id ?
-                            Number((booking.bookingPriceUSD) - (booking.bookingPriceUSD * (booking.refund_id.plan / 100)) +
-                                (((booking.bookingPriceUSD) - (booking.bookingPriceUSD * (booking.refund_id.plan / 100))) * commision)).toFixed(2) :
-                            Number(booking.bookingPriceUSD + (booking.bookingPriceUSD * commision)).toFixed(2);
+                        const btnBase = Number(booking?.bookingPriceBTN || 0);
+                        const usdBase = Number(booking?.bookingPriceUSD || 0);
 
-                        // Check cType and return appropriate value
-                        return booking.cType === 'BTN' ?
-                            `${Number(refundBTN).toFixed(2)} BTN` :
-                            `${Number(refundUSD).toFixed(2)} USD`;
+                        const refundBTN = btnBase - (btnBase * (refundPercent / 100));
+                        const refundUSD = (usdBase - (usdBase * (refundPercent / 100))) * (1 + comm);
+
+                        const finalFare = cType === "USD"
+                            ? `${refundUSD.toFixed(2)} USD`
+                            : `${refundBTN.toFixed(2)} BTN`;
+                        return finalFare
                     })()}</div>
                     </div>
                     <div class="info-row">
                         <div class="info-label">FORM OF PAYMENT</div>
-                        <div class="info-value">${booking.payment_type}</div>
+                        <div class="info-value">${booking.payment_type ? booking.payment_type : "FORM OF PAYMENT NOT SET"}</div>
                     </div>
                 </div>
             </body>
