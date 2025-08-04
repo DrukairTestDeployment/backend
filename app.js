@@ -2,6 +2,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const helmet = require("helmet")
 const app = express();
+
+app.set('trust proxy', true);
+
 const cors = require('cors');
 const cookieParser = require("cookie-parser");
 const roleRoutes = require('./routes/roleRoutes');
